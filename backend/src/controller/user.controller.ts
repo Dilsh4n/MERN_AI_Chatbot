@@ -42,7 +42,7 @@ export const userSignUp = async (req:Request,res:Response,next:NextFunction) => 
             signed: true
         })
 
-        return res.status(201).json({success:true,message:"User Created",id:newUser._id.toString()});
+        return res.status(201).json({success:true,message:"User Created",name:newUser.name,email:newUser.email});
     } catch (error) {
         console.log(error);
         return res.status(400).json({success:false, message:"Error", cause:error.message});
@@ -54,7 +54,7 @@ export const userLogin = async (req:Request,res:Response,next:NextFunction) => {
         const {email,password} = req.body;
         const user = await User.findOne({email});
         if(!user){
-            return res.status(400).send("User not registered")
+            return res.status(401).send("User not registered")
         }
 
         const isValidPw = await compare(password,user.password);
@@ -82,10 +82,54 @@ export const userLogin = async (req:Request,res:Response,next:NextFunction) => {
             httpOnly: true,
             signed: true
         })
-        return res.status(200).json({success:true,message:"User Logged In",id:user._id.toString()});
+        return res.status(200).json({success:true,message:"User Logged In",name:user.name,email:user.email});
         
     } catch (error) {
         console.log(error);
         return res.status(400).json({success:false, message:"Error", cause:error.message});
     }
 };
+
+export const verifyUser = async (req:Request,res:Response,next:NextFunction) => {
+    try {
+        const user = await User.findById(res.locals.jwtdata.id);
+        if(!user){
+            return res.status(401).send("User not registered or token malfunctioned")
+        }
+        if(user._id.toString() !== res.locals.jwtdata.id){
+            return res.status(401).send("Permissions didn't match")
+        }
+        return res.status(200).json({success:true,message:"User Logged In",name:user.name,email:user.email});
+        
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({success:false, message:"Error", cause:error.message});
+    }
+};
+
+
+export const logoutUser = async (req:Request,res:Response,next:NextFunction) => {
+    try {
+        const user = await User.findById(res.locals.jwtdata.id);
+        if(!user){
+            return res.status(401).send("User not registered or token malfunctioned")
+        }
+        if(user._id.toString() !== res.locals.jwtdata.id){
+            return res.status(401).send("Permissions didn't match")
+        }
+        
+        res.clearCookie(COOKIE_NAME,{
+            path : '/',
+            domain: 'localhost',
+            httpOnly: true,
+            signed: true
+        });
+
+        return res.status(200).json({success:true,message:"User Logged Out"});
+
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({success:false, message:"Error", cause:error.message});
+    }
+};
+

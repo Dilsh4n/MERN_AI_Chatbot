@@ -1,7 +1,5 @@
-import React from 'react'
 import { Link } from 'react-router-dom'
 import logo from '../../../public/openai.png'
-import { MdHeight } from 'react-icons/md'
 import { Typography } from '@mui/material'
 
 const Logo = () => {
